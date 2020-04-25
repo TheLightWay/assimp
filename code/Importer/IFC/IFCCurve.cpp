@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 All rights reserved.
@@ -285,11 +285,11 @@ public:
         out.mVerts.reserve(out.mVerts.size() + cnt);
 
         for(const CurveEntry& entry : curves) {
-            const size_t cnt = out.mVerts.size();
+            const size_t curCnt = out.mVerts.size();
             entry.first->SampleDiscrete(out);
 
-            if (!entry.second && cnt != out.mVerts.size()) {
-                std::reverse(out.mVerts.begin()+cnt,out.mVerts.end());
+            if (!entry.second && curCnt != out.mVerts.size()) {
+                std::reverse(out.mVerts.begin() + curCnt, out.mVerts.end());
             }
         }
     }
@@ -323,14 +323,14 @@ public:
         // oh well.
         bool have_param = false, have_point = false;
         IfcVector3 point;
-        for(const Entry sel :entity.Trim1) {
+        for(const Entry& sel :entity.Trim1) {
             if (const ::Assimp::STEP::EXPRESS::REAL* const r = sel->ToPtr<::Assimp::STEP::EXPRESS::REAL>()) {
                 range.first = *r;
                 have_param = true;
                 break;
             }
-            else if (const Schema_2x3::IfcCartesianPoint* const r = sel->ResolveSelectPtr<Schema_2x3::IfcCartesianPoint>(conv.db)) {
-                ConvertCartesianPoint(point,*r);
+            else if (const Schema_2x3::IfcCartesianPoint* const curR = sel->ResolveSelectPtr<Schema_2x3::IfcCartesianPoint>(conv.db)) {
+                ConvertCartesianPoint(point, *curR);
                 have_point = true;
             }
         }
@@ -340,14 +340,14 @@ public:
             }
         }
         have_param = false, have_point = false;
-        for(const Entry sel :entity.Trim2) {
+        for(const Entry& sel :entity.Trim2) {
             if (const ::Assimp::STEP::EXPRESS::REAL* const r = sel->ToPtr<::Assimp::STEP::EXPRESS::REAL>()) {
                 range.second = *r;
                 have_param = true;
                 break;
             }
-            else if (const Schema_2x3::IfcCartesianPoint* const r = sel->ResolveSelectPtr<Schema_2x3::IfcCartesianPoint>(conv.db)) {
-                ConvertCartesianPoint(point,*r);
+            else if (const Schema_2x3::IfcCartesianPoint* const curR = sel->ResolveSelectPtr<Schema_2x3::IfcCartesianPoint>(conv.db)) {
+                ConvertCartesianPoint(point, *curR);
                 have_point = true;
             }
         }

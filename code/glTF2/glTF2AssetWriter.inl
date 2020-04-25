@@ -2,8 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
-
+Copyright (c) 2006-2020, assimp team
 
 All rights reserved.
 
@@ -54,8 +53,8 @@ namespace glTF2 {
 
     namespace {
 
-        template<size_t N>
-        inline Value& MakeValue(Value& val, float(&r)[N], MemoryPoolAllocator<>& al) {
+        template<typename T, size_t N>
+        inline Value& MakeValue(Value& val, T(&r)[N], MemoryPoolAllocator<>& al) {
             val.SetArray();
             val.Reserve(N, al);
             for (decltype(N) i = 0; i < N; ++i) {
@@ -64,7 +63,8 @@ namespace glTF2 {
             return val;
         }
 
-        inline Value& MakeValue(Value& val, const std::vector<float> & r, MemoryPoolAllocator<>& al) {
+        template<typename T>
+        inline Value& MakeValue(Value& val, const std::vector<T> & r, MemoryPoolAllocator<>& al) {
             val.SetArray();
             val.Reserve(static_cast<rapidjson::SizeType>(r.size()), al);
             for (unsigned int i = 0; i < r.size(); ++i) {
@@ -73,8 +73,19 @@ namespace glTF2 {
             return val;
         }
 
-        inline Value& MakeValue(Value& val, float r, MemoryPoolAllocator<>& /*al*/) {
-            val.SetDouble(r);
+        template<typename C, typename T>
+        inline Value& MakeValueCast(Value& val, const std::vector<T> & r, MemoryPoolAllocator<>& al) {
+            val.SetArray();
+            val.Reserve(static_cast<rapidjson::SizeType>(r.size()), al);
+            for (unsigned int i = 0; i < r.size(); ++i) {
+                val.PushBack(static_cast<C>(r[i]), al);
+            }
+            return val;
+        }
+
+        template<typename T>
+        inline Value& MakeValue(Value& val, T r, MemoryPoolAllocator<>& /*al*/) {
+            val.Set(r);
 
             return val;
         }
@@ -104,8 +115,13 @@ namespace glTF2 {
         obj.AddMember("type", StringRef(AttribType::ToString(a.type)), w.mAl);
 
         Value vTmpMax, vTmpMin;
-        obj.AddMember("max", MakeValue(vTmpMax, a.max, w.mAl), w.mAl);
-        obj.AddMember("min", MakeValue(vTmpMin, a.min, w.mAl), w.mAl);
+		if (a.componentType == ComponentType_FLOAT) {
+			obj.AddMember("max", MakeValue(vTmpMax, a.max, w.mAl), w.mAl);
+			obj.AddMember("min", MakeValue(vTmpMin, a.min, w.mAl), w.mAl);
+		} else {
+			obj.AddMember("max", MakeValueCast<int64_t>(vTmpMax, a.max, w.mAl), w.mAl);
+			obj.AddMember("min", MakeValueCast<int64_t>(vTmpMin, a.min, w.mAl), w.mAl);
+		}
     }
 
     inline void Write(Value& obj, Animation& a, AssetWriter& w)
@@ -159,13 +175,13 @@ namespace glTF2 {
                 valSampler.AddMember("input", s.input->index, w.mAl);
                 switch (s.interpolation) {
                     case Interpolation_LINEAR:
-                        valSampler.AddMember("path", "LINEAR", w.mAl);
+                        valSampler.AddMember("interpolation", "LINEAR", w.mAl);
                         break;
                     case Interpolation_STEP:
-                        valSampler.AddMember("path", "STEP", w.mAl);
+                        valSampler.AddMember("interpolation", "STEP", w.mAl);
                         break;
                     case Interpolation_CUBICSPLINE:
-                        valSampler.AddMember("path", "CUBICSPLINE", w.mAl);
+                        valSampler.AddMember("interpolation", "CUBICSPLINE", w.mAl);
                         break;
                 }
                 valSampler.AddMember("output", s.output->index, w.mAl);
@@ -192,7 +208,7 @@ namespace glTF2 {
         if (bv.byteStride != 0) {
             obj.AddMember("byteStride", bv.byteStride, w.mAl);
         }
-        if (bv.target != 0) {
+        if (bv.target != BufferViewTarget_NONE) {
             obj.AddMember("target", int(bv.target), w.mAl);
         }
     }
@@ -358,7 +374,7 @@ namespace glTF2 {
             WriteVec(pbrSpecularGlossiness, pbrSG.specularFactor, "specularFactor", defaultSpecularFactor, w.mAl);
 
             if (pbrSG.glossinessFactor != 1) {
-                WriteFloat(obj, pbrSG.glossinessFactor, "glossinessFactor", w.mAl);
+                WriteFloat(pbrSpecularGlossiness, pbrSG.glossinessFactor, "glossinessFactor", w.mAl);
             }
 
             WriteTex(pbrSpecularGlossiness, pbrSG.diffuseTexture, "diffuseTexture", w.mAl);
@@ -429,6 +445,24 @@ namespace glTF2 {
                     WriteAttrs(w, attrs, p.attributes.weight, "WEIGHTS", true);
                 }
                 prim.AddMember("attributes", attrs, w.mAl);
+
+                // targets for blendshapes
+                if (p.targets.size() > 0) {
+                    Value tjs;
+                    tjs.SetArray();
+                    tjs.Reserve(unsigned(p.targets.size()), w.mAl);
+                    for (unsigned int t = 0; t < p.targets.size(); ++t) {
+                        Value tj;
+                        tj.SetObject();
+                        {
+                            WriteAttrs(w, tj, p.targets[t].position, "POSITION");
+                            WriteAttrs(w, tj, p.targets[t].normal, "NORMAL");
+                            WriteAttrs(w, tj, p.targets[t].tangent, "TANGENT");
+                        }
+                        tjs.PushBack(tj, w.mAl);
+                    }
+                    prim.AddMember("targets", tjs, w.mAl);
+                }
             }
             primitives.PushBack(prim, w.mAl);
         }
@@ -658,7 +692,7 @@ namespace glTF2 {
         uint32_t binaryChunkLength = 0;
         if (bodyBuffer->byteLength > 0) {
             binaryChunkLength = (bodyBuffer->byteLength + 3) & ~3; // Round up to next multiple of 4
-            auto paddingLength = binaryChunkLength - bodyBuffer->byteLength;
+            //auto curPaddingLength = binaryChunkLength - bodyBuffer->byteLength;
 
             GLB_Chunk binaryChunk;
             binaryChunk.chunkLength = binaryChunkLength;
@@ -703,6 +737,8 @@ namespace glTF2 {
         asset.SetObject();
         asset.AddMember("version", Value(mAsset.asset.version, mAl).Move(), mAl);
         asset.AddMember("generator", Value(mAsset.asset.generator, mAl).Move(), mAl);
+        if (!mAsset.asset.copyright.empty())
+            asset.AddMember("copyright", Value(mAsset.asset.copyright, mAl).Move(), mAl);
         mDoc.AddMember("asset", asset, mAl);
     }
 
@@ -734,19 +770,20 @@ namespace glTF2 {
 
         if (d.mExtId) {
             Value* exts = FindObject(mDoc, "extensions");
-            if (!exts) {
+            if (nullptr != exts) {
                 mDoc.AddMember("extensions", Value().SetObject().Move(), mDoc.GetAllocator());
                 exts = FindObject(mDoc, "extensions");
             }
 
-            if (!(container = FindObject(*exts, d.mExtId))) {
+            container = FindObject(*exts, d.mExtId);
+            if (nullptr != container) {
                 exts->AddMember(StringRef(d.mExtId), Value().SetObject().Move(), mDoc.GetAllocator());
                 container = FindObject(*exts, d.mExtId);
             }
         }
 
-        Value* dict;
-        if (!(dict = FindArray(*container, d.mDictId))) {
+        Value *dict = FindArray(*container, d.mDictId);
+        if (nullptr == dict) {
             container->AddMember(StringRef(d.mDictId), Value().SetArray().Move(), mDoc.GetAllocator());
             dict = FindArray(*container, d.mDictId);
             if (nullptr == dict) {
@@ -755,7 +792,9 @@ namespace glTF2 {
         }
 
         for (size_t i = 0; i < d.mObjs.size(); ++i) {
-            if (d.mObjs[i]->IsSpecial()) continue;
+            if (d.mObjs[i]->IsSpecial()) {
+                continue;
+            }
 
             Value obj;
             obj.SetObject();

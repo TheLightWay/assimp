@@ -9,6 +9,9 @@ For details, see http://sourceforge.net/projects/libb64
 
 const int CHARS_PER_LINE = 72;
 
+#pragma warning(push)
+#pragma warning(disable : 4244)
+
 void base64_init_encodestate(base64_encodestate* state_in)
 {
 	state_in->step = step_A;
@@ -42,7 +45,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 			{
 				state_in->result = result;
 				state_in->step = step_A;
-				return codechar - code_out;
+				return (int)(codechar - code_out);
 			}
 			fragment = *plainchar++;
 			result = (fragment & 0x0fc) >> 2;
@@ -53,7 +56,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 			{
 				state_in->result = result;
 				state_in->step = step_B;
-				return codechar - code_out;
+				return (int)(codechar - code_out);
 			}
 			fragment = *plainchar++;
 			result |= (fragment & 0x0f0) >> 4;
@@ -64,7 +67,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 			{
 				state_in->result = result;
 				state_in->step = step_C;
-				return codechar - code_out;
+				return (int)(codechar - code_out);
 			}
 			fragment = *plainchar++;
 			result |= (fragment & 0x0c0) >> 6;
@@ -81,7 +84,7 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 		}
 	}
 	/* control should not reach here */
-	return codechar - code_out;
+	return (int)(codechar - code_out);
 }
 
 int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
@@ -104,6 +107,7 @@ int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 	}
 	*codechar++ = '\n';
 	
-	return codechar - code_out;
+	return (int)(codechar - code_out);
 }
 
+#pragma warning(pop)

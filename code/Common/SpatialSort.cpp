@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 
@@ -52,6 +52,10 @@ using namespace Assimp;
 #ifndef CHAR_BIT
 #   define CHAR_BIT 8
 #endif
+
+#ifdef _WIN32
+#    pragma warning(disable : 4127)  
+#endif // _WIN32
 
 // ------------------------------------------------------------------------------------------------
 // Constructs a spatially sorted representation from the given position array.

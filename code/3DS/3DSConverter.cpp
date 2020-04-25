@@ -3,9 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
-
-
+Copyright (c) 2006-2020, assimp team
 
 All rights reserved.
 
@@ -43,7 +41,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /** @file Implementation of the 3ds importer class */
 
-
 #ifndef ASSIMP_BUILD_NO_3DS_IMPORTER
 
 // internal headers
@@ -72,7 +69,7 @@ void Discreet3DSImporter::ReplaceDefaultMaterial()
     unsigned int idx( NotSet );
     for (unsigned int i = 0; i < mScene->mMaterials.size();++i)
     {
-        std::string &s = mScene->mMaterials[i].mName;
+        std::string s = mScene->mMaterials[i].mName;
         for ( std::string::iterator it = s.begin(); it != s.end(); ++it ) {
             *it = static_cast< char >( ::tolower( *it ) );
         }

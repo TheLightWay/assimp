@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 All rights reserved.
 
@@ -250,7 +250,7 @@ aiNode* COBImporter::BuildNodes(const Node& root,const Scene& scin,aiScene* fill
         const Mesh& ndmesh = (const Mesh&)(root);
         if (ndmesh.vertex_positions.size() && ndmesh.texture_coords.size()) {
 
-            typedef std::pair<unsigned int,Mesh::FaceRefList> Entry;
+            typedef std::pair<const unsigned int,Mesh::FaceRefList> Entry;
             for(const Entry& reflist : ndmesh.temp_map) {
                 {   // create mesh
                     size_t n = 0;
@@ -1015,8 +1015,8 @@ void COBImporter::ReadPolH_Binary(COB::Scene& out, StreamReaderLE& reader, const
         // XXX backface culling flag is 0x10 in flags
 
         // hole?
-        bool hole;
-        if ((hole = (reader.GetI1() & 0x08) != 0)) {
+        bool hole = (reader.GetI1() & 0x08) != 0;
+        if ( hole ) {
             // XXX Basically this should just work fine - then triangulator
             // should output properly triangulated data even for polygons
             // with holes. Test data specific to COB is needed to confirm it.

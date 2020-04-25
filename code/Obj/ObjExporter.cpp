@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 All rights reserved.
@@ -86,7 +86,7 @@ void ExportSceneObj(const char* pFile,IOSystem* pIOSystem, const aiScene* pScene
 
 // ------------------------------------------------------------------------------------------------
 // Worker function for exporting a scene to Wavefront OBJ without the material file. Prototyped and registered in Exporter.cpp
-void ExportSceneObjNoMtl(const char* pFile,IOSystem* pIOSystem, const aiScene* pScene, const ExportProperties* pProperties) {
+void ExportSceneObjNoMtl(const char* pFile,IOSystem* pIOSystem, const aiScene* pScene, const ExportProperties* ) {
     // invoke the exporter
     ObjExporter exporter(pFile, pScene, true);
 

@@ -2,7 +2,7 @@
 Open Asset Import Library (ASSIMP)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, ASSIMP Development Team
+Copyright (c) 2006-2020, ASSIMP Development Team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -44,6 +44,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INCLUDED_IFC_READER_GEN_H
 
 #include "code/Step/STEPFile.h"
+
+#ifdef _WIN32
+#    pragma warning( disable : 4512 )
+#endif // _WIN32
 
 namespace Assimp {
 namespace IFC {

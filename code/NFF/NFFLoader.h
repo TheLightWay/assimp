@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 All rights reserved.
@@ -185,8 +185,8 @@ private:
 
         // for spheres, cones and cylinders: center point of the object
         aiVector3D center, radius, dir;
-
-        char name[128];
+        static const size_t MaxNameLen = 128;
+        char name[MaxNameLen];
 
         std::vector<aiVector3D> vertices, normals, uvs;
         std::vector<unsigned int> faces;

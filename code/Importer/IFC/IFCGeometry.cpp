@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2010, assimp team
+Copyright (c) 2006-2020, assimp team
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -101,7 +101,7 @@ void ProcessPolygonBoundaries(TempMesh& result, const TempMesh& inmesh, size_t m
         return;
     }
 
-    ai_assert(std::count(inmesh.mVertcnt.begin(), inmesh.mVertcnt.end(), 0) == 0);
+    ai_assert(std::count(inmesh.mVertcnt.begin(), inmesh.mVertcnt.end(), 0u) == 0);
 
     typedef std::vector<unsigned int>::const_iterator face_iter;
 
@@ -138,8 +138,9 @@ void ProcessPolygonBoundaries(TempMesh& result, const TempMesh& inmesh, size_t m
             }
         }
     }
-
-    ai_assert(outer_polygon_it != end);
+	if (outer_polygon_it == end) {
+		return;
+	}
 
     const size_t outer_polygon_size = *outer_polygon_it;
     const IfcVector3& master_normal = normals[std::distance(begin, outer_polygon_it)];
@@ -378,7 +379,7 @@ void ProcessSweptDiskSolid(const Schema_2x3::IfcSweptDiskSolid &solid, TempMesh&
         IfcVector3 q;
         bool take_any = false;
 
-        for (unsigned int i = 0; i < 2; ++i, take_any = true) {
+        for (unsigned int j = 0; j < 2; ++j, take_any = true) {
             if ((last_dir == 0 || take_any) && std::abs(d.x) > 1e-6) {
                 q.y = startvec.y;
                 q.z = startvec.z;

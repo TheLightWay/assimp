@@ -2,7 +2,7 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 All rights reserved.
@@ -53,6 +53,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 using namespace Assimp;
 void mydummy() {}
 
+#ifdef _WIN32
+#    pragma warning( disable : 4709 ) 
+#endif // _WIN32
 // ------------------------------------------------------------------------------------------------
 /** Subdivider stub class to implement the Catmull-Clarke subdivision algorithm. The
  *  implementation is basing on recursive refinement. Directly evaluating the result is also

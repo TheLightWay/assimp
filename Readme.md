@@ -2,6 +2,7 @@ Open Asset Import Library (assimp)
 ==================================
 A library to import and export various 3d-model-formats including scene-post-processing to generate missing render data.
 ### Current project status ###
+![C/C++ CI](https://github.com/assimp/assimp/workflows/C/C++%20CI/badge.svg)
 [![Linux Build Status](https://travis-ci.org/assimp/assimp.svg)](https://travis-ci.org/assimp/assimp)
 [![Windows Build Status](https://ci.appveyor.com/api/projects/status/tmo433wax6u6cjp4?svg=true)](https://ci.appveyor.com/project/kimkulling/assimp)
 <a href="https://scan.coverity.com/projects/5607">
@@ -60,13 +61,19 @@ __Importers__:
 - ENFF
 - [FBX](https://en.wikipedia.org/wiki/FBX)
 - [glTF 1.0](https://en.wikipedia.org/wiki/GlTF#glTF_1.0) + GLB
-- [glTF 2.0](https://en.wikipedia.org/wiki/GlTF#glTF_2.0)
+- [glTF 2.0](https://en.wikipedia.org/wiki/GlTF#glTF_2.0):
+  At the moment for glTF2.0 the following extensions are supported:
+  + KHR_lights_punctual ( 5.0 )
+  + KHR_materials_pbrSpecularGlossiness ( 5.0 )
+  + KHR_materials_unlit ( 5.0 )
+  + KHR_texture_transform ( 5.1 under test )
 - HMB
 - IFC-STEP
 - IRR / IRRMESH
 - [LWO](https://en.wikipedia.org/wiki/LightWave_3D)
 - LWS
 - LXO
+- [M3D](https://bztsrc.gitlab.io/model3d)
 - MD2
 - MD3
 - MD5
@@ -125,7 +132,7 @@ Take a look into the https://github.com/assimp/assimp/blob/master/Build.md file.
 ### Ports ###
 * [Android](port/AndroidJNI/README.md)
 * [Python](port/PyAssimp/README.md)
-* [.NET](https://github.com/kebby/assimp-net)
+* [.NET](https://github.com/assimp/assimp-net)
 * [Pascal](port/AssimpPascal/Readme.md)
 * [Javascript (Alpha)](https://github.com/makc/assimp2json)
 * [Unity 3d Plugin](https://www.assetstore.unity3d.com/en/#!/content/91777)

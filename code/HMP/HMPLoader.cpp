@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 
@@ -118,11 +118,11 @@ void HMPImporter::InternReadFile( const std::string& pFile,
                                  aiScene* _pScene, IOSystem* _pIOHandler)
 {
     pScene     = _pScene;
-    pIOHandler = _pIOHandler;
-    std::unique_ptr<IOStream> file( pIOHandler->Open( pFile));
+    mIOHandler = _pIOHandler;
+    std::unique_ptr<IOStream> file(mIOHandler->Open(pFile));
 
     // Check whether we can read from the file
-    if( file.get() == NULL)
+    if( file.get() == nullptr)
         throw DeadlyImportError( "Failed to open HMP file " + pFile + ".");
 
     // Check whether the HMP file is large enough to contain

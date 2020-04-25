@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2019, assimp team
+Copyright (c) 2006-2020, assimp team
 
 
 
@@ -1483,6 +1483,7 @@ void IRRImporter::InternReadFile( const std::string& pFile,
      */
 
     delete root;
+	delete reader;
 }
 
 #endif // !! ASSIMP_BUILD_NO_IRR_IMPORTER
