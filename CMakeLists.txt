@@ -35,6 +35,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #----------------------------------------------------------------------
 SET(CMAKE_POLICY_DEFAULT_CMP0074 NEW)
+SET(CMAKE_POLICY_DEFAULT_CMP0092 NEW)
 
 CMAKE_MINIMUM_REQUIRED( VERSION 3.0 )
 
@@ -44,8 +45,8 @@ option(ASSIMP_HUNTER_ENABLED "Enable Hunter package manager support" OFF)
 IF(ASSIMP_HUNTER_ENABLED)
   include("cmake/HunterGate.cmake")
   HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.176.tar.gz"
-    SHA1 "2e9ae973d028660b735ac4c6142725ca36a0048a"
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.261.tar.gz"
+    SHA1 "1540dad7b97c849784a09e8c452ba811c9f71ba2"
   )
 
   add_definitions(-DASSIMP_USE_HUNTER)
@@ -133,6 +134,12 @@ OPTION ( ASSIMP_IGNORE_GIT_HASH
    "Don't call git to get the hash."
    OFF
 )
+
+IF ( WIN32 )
+    OPTION ( ASSIMP_BUILD_ASSIMP_VIEW 
+      "If the Assimp view tool is built. (requires DirectX)" 
+      OFF )
+ENDIF()
 
 IF (IOS AND NOT ASSIMP_HUNTER_ENABLED)
   IF (NOT CMAKE_BUILD_TYPE)
@@ -239,27 +246,23 @@ IF( UNIX )
   INCLUDE(GNUInstallDirs)
 ENDIF()
 
-# enable warnings as errors ########################################
-IF (MSVC)
-  ADD_COMPILE_OPTIONS(/WX)
-ELSE()
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
-ENDIF()
-
 # Grouped compiler settings ########################################
 IF ((CMAKE_C_COMPILER_ID MATCHES "GNU") AND NOT CMAKE_COMPILER_IS_MINGW)
   IF(NOT ASSIMP_HUNTER_ENABLED)
-    SET(CMAKE_CXX_FLAGS "-fPIC -std=c++0x ${CMAKE_CXX_FLAGS}")
-    SET(CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
+    SET(CMAKE_CXX_STANDARD 11)
+    SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
   ENDIF()
   # hide all not-exported symbols
-  SET(CMAKE_CXX_FLAGS "-g -fvisibility=hidden -fno-strict-aliasing -Wall ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -fno-strict-aliasing -Wall ${CMAKE_CXX_FLAGS}")
   SET(CMAKE_C_FLAGS "-fno-strict-aliasing ${CMAKE_C_FLAGS}")
   SET(LIBSTDC++_LIBRARIES -lstdc++)
 ELSEIF(MSVC)
   # enable multi-core compilation with MSVC
-  ADD_COMPILE_OPTIONS(/MP /bigobj /W4 /WX ) 
+  IF( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" ) # clang-cl
+    ADD_COMPILE_OPTIONS(/bigobj /W4 /WX )
+  ELSE() # msvc
+    ADD_COMPILE_OPTIONS(/MP /bigobj /W4 /WX)
+  ENDIF()
   # disable "elements of array '' will be default initialized" warning on MSVC2013
   IF(MSVC12)
     ADD_COMPILE_OPTIONS(/wd4351)
@@ -267,10 +270,10 @@ ELSEIF(MSVC)
   SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /D_DEBUG /Zi /Od")
 ELSEIF ( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
   IF(NOT ASSIMP_HUNTER_ENABLED)
-    SET(CMAKE_CXX_FLAGS "-fPIC -std=c++11 ${CMAKE_CXX_FLAGS}")
-    SET(CMAKE_C_FLAGS "-fPIC ${CMAKE_C_FLAGS}")
+    SET(CMAKE_CXX_STANDARD 11)
+    SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
   ENDIF()
-  SET(CMAKE_CXX_FLAGS "-g -fvisibility=hidden -fno-strict-aliasing -Wall -Wno-long-long ${CMAKE_CXX_FLAGS}" )
+  SET(CMAKE_CXX_FLAGS "-fvisibility=hidden -fno-strict-aliasing -Wall -Wno-long-long ${CMAKE_CXX_FLAGS}" )
   SET(CMAKE_C_FLAGS "-fno-strict-aliasing ${CMAKE_C_FLAGS}")
 ELSEIF( CMAKE_COMPILER_IS_MINGW )
   IF (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
@@ -323,26 +326,27 @@ ENDIF()
 
 IF (ASSIMP_UBSAN)
   MESSAGE(STATUS "Undefined Behavior sanitizer enabled")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fno-sanitize-recover=all")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined -fno-sanitize-recover=all")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined,shift,shift-exponent,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr,pointer-overflow,builtin -fno-sanitize-recover=all")
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined,shift,shift-exponent,integer-divide-by-zero,unreachable,vla-bound,null,return,signed-integer-overflow,bounds,float-divide-by-zero,float-cast-overflow,nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr,pointer-overflow,builtin -fno-sanitize-recover=all")
 ENDIF()
 
 INCLUDE (FindPkgMacros)
 INCLUDE (PrecompiledHeader)
 
-# If this is an in-source build (CMAKE_SOURCE_DIR == CMAKE_BINARY_DIR),
-# write the library/executable files to the respective directories in the
-# source tree. During an out-of-source build, however, do not litter this
-# directory, since that is probably what the user wanted to avoid.
-IF ( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
-  SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/bin" )
-  SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/lib" )
-  SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/bin" )
-ELSE()
-  SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
-  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-  SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
-ENDIF ()
+# Set Assimp project output directory variables.
+SET(ASSIMP_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+SET(ASSIMP_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
+SET(ASSIMP_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
+
+# Macro used to set the output directories of a target to the
+# respective Assimp output directories.
+MACRO(TARGET_USE_COMMON_OUTPUT_DIRECTORY target)
+  set_target_properties(${target} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY ${ASSIMP_RUNTIME_OUTPUT_DIRECTORY}
+      LIBRARY_OUTPUT_DIRECTORY ${ASSIMP_LIBRARY_OUTPUT_DIRECTORY}
+      ARCHIVE_OUTPUT_DIRECTORY ${ASSIMP_ARCHIVE_OUTPUT_DIRECTORY}
+  )
+ENDMACRO()
 
 get_cmake_property(is_multi_config GENERATOR_IS_MULTI_CONFIG)
 
@@ -357,6 +361,34 @@ IF (NOT TARGET uninstall)
   # add make uninstall capability
   CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules/cmake_uninstall.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
   ADD_CUSTOM_TARGET(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+ENDIF()
+
+# cmake configuration files
+if(${BUILD_SHARED_LIBS})
+  set(BUILD_LIB_TYPE SHARED)
+else()
+  set(BUILD_LIB_TYPE STATIC)
+endif()
+
+IF( UNIX )
+  # Use GNUInstallDirs for Unix predefined directories
+  INCLUDE(GNUInstallDirs)
+
+  SET( ASSIMP_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+  SET( ASSIMP_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
+  SET( ASSIMP_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
+ELSE()
+  # Cache these to allow the user to override them on non-Unix platforms
+  SET( ASSIMP_LIB_INSTALL_DIR "lib" CACHE STRING
+    "Path the built library files are installed to." )
+  SET( ASSIMP_INCLUDE_INSTALL_DIR "include" CACHE STRING
+    "Path the header files are installed to." )
+  SET( ASSIMP_BIN_INSTALL_DIR "bin" CACHE STRING
+    "Path the tool executables are installed to." )
+
+  SET(CMAKE_INSTALL_FULL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/${ASSIMP_INCLUDE_INSTALL_DIR})
+  SET(CMAKE_INSTALL_FULL_LIBDIR ${CMAKE_INSTALL_PREFIX}/${ASSIMP_LIB_INSTALL_DIR})
+  SET(CMAKE_INSTALL_FULL_BINDIR ${CMAKE_INSTALL_PREFIX}/${ASSIMP_BIN_INSTALL_DIR})
 ENDIF()
 
 IF(ASSIMP_HUNTER_ENABLED)
@@ -397,34 +429,6 @@ IF(ASSIMP_HUNTER_ENABLED)
       DESTINATION "${CONFIG_INSTALL_DIR}"
   )
 ELSE()
-  # cmake configuration files
-  if(${BUILD_SHARED_LIBS})
-    set(BUILD_LIB_TYPE SHARED)
-  else()
-    set(BUILD_LIB_TYPE STATIC)
-  endif()
-
-  IF( UNIX )
-    # Use GNUInstallDirs for Unix predefined directories
-    INCLUDE(GNUInstallDirs)
-
-    SET( ASSIMP_LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
-    SET( ASSIMP_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-    SET( ASSIMP_BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
-  ELSE()
-    # Cache these to allow the user to override them on non-Unix platforms
-    SET( ASSIMP_LIB_INSTALL_DIR "lib" CACHE STRING
-      "Path the built library files are installed to." )
-    SET( ASSIMP_INCLUDE_INSTALL_DIR "include" CACHE STRING
-      "Path the header files are installed to." )
-    SET( ASSIMP_BIN_INSTALL_DIR "bin" CACHE STRING
-      "Path the tool executables are installed to." )
-
-    SET(CMAKE_INSTALL_FULL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/${ASSIMP_INCLUDE_INSTALL_DIR})
-    SET(CMAKE_INSTALL_FULL_LIBDIR ${CMAKE_INSTALL_PREFIX}/${ASSIMP_LIB_INSTALL_DIR})
-    SET(CMAKE_INSTALL_FULL_BINDIR ${CMAKE_INSTALL_PREFIX}/${ASSIMP_BIN_INSTALL_DIR})
-  ENDIF()
-
   CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/assimp-config.cmake.in"         "${CMAKE_CURRENT_BINARY_DIR}/assimp-config.cmake" @ONLY IMMEDIATE)
   CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/assimpTargets.cmake.in"         "${CMAKE_CURRENT_BINARY_DIR}/assimpTargets.cmake" @ONLY IMMEDIATE)
   IF (is_multi_config)
@@ -520,19 +524,19 @@ ENDIF()
 SET ( ASSIMP_BUILD_ARCHITECTURE "" CACHE STRING
   "describe the current architecture."
 )
-IF    ( ASSIMP_BUILD_ARCHITECTURE STREQUAL "")
-ELSE  ()
+IF( ASSIMP_BUILD_ARCHITECTURE STREQUAL "")
+ELSE()
   ADD_DEFINITIONS ( -D'ASSIMP_BUILD_ARCHITECTURE="${ASSIMP_BUILD_ARCHITECTURE}"' )
-ENDIF ()
+ENDIF()
 
 # ${CMAKE_GENERATOR}
 SET ( ASSIMP_BUILD_COMPILER "" CACHE STRING
   "describe the current compiler."
 )
-IF    ( ASSIMP_BUILD_COMPILER STREQUAL "")
-ELSE  ()
+IF( ASSIMP_BUILD_COMPILER STREQUAL "")
+ELSE()
   ADD_DEFINITIONS ( -D'ASSIMP_BUILD_COMPILER="${ASSIMP_BUILD_COMPILER}"' )
-ENDIF ()
+ENDIF()
 
 MARK_AS_ADVANCED ( ASSIMP_BUILD_ARCHITECTURE ASSIMP_BUILD_COMPILER )
 
@@ -681,7 +685,8 @@ if(WIN32)
   ENDIF()
 
   IF(MSVC_TOOLSET_VERSION)
-    set(MSVC_PREFIX "vc${MSVC_TOOLSET_VERSION}")
+    SET(MSVC_PREFIX "vc${MSVC_TOOLSET_VERSION}")
+    SET(ASSIMP_MSVC_VERSION ${MCVS_PREFIX})
   ELSE()
     IF(MSVC12)
       SET(ASSIMP_MSVC_VERSION "vc120")

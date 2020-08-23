@@ -2,8 +2,7 @@
 # ----------------------------------------------------------------------
 #
 # Copyright (c) 2006-2020, assimp team
-
-
+#
 # All rights reserved.
 #
 # Redistribution and use of this software in source and binary forms,
@@ -40,8 +39,8 @@
 cmake_minimum_required( VERSION 3.0 )
 
 INCLUDE_DIRECTORIES(
-	${Assimp_SOURCE_DIR}/contrib/gtest/include
-	${Assimp_SOURCE_DIR}/contrib/gtest/
+    ${Assimp_SOURCE_DIR}/contrib/gtest/include
+    ${Assimp_SOURCE_DIR}/contrib/gtest/
     ${Assimp_SOURCE_DIR}/test/unit
     ${Assimp_SOURCE_DIR}/include
     ${Assimp_SOURCE_DIR}/code
@@ -84,8 +83,11 @@ SET( COMMON
   unit/utProfiler.cpp
   unit/utSharedPPData.cpp
   unit/utStringUtils.cpp
+  unit/Common/utStandardShapes.cpp
   unit/Common/uiScene.cpp
   unit/Common/utLineSplitter.cpp
+  unit/Common/utSpatialSort.cpp
+  unit/Common/utAssertHandler.cpp
 )
 
 SET( IMPORTERS
@@ -123,8 +125,7 @@ SET( IMPORTERS
   unit/utBlendImportMaterials.cpp
   unit/utBlenderWork.cpp
   unit/utBVHImportExport.cpp
-  unit/utColladaExportCamera.cpp
-  unit/utColladaExportLight.cpp
+  unit/utColladaExport.cpp
   unit/utColladaImportExport.cpp
   unit/utCSMImportExport.cpp
   unit/utB3DImportExport.cpp
@@ -206,6 +207,8 @@ add_executable( unit
 	${MATH}
     ${POST_PROCESSES}
 )
+
+TARGET_USE_COMMON_OUTPUT_DIRECTORY(unit)
 
 add_definitions(-DASSIMP_TEST_MODELS_DIR="${CMAKE_CURRENT_LIST_DIR}/models")
 add_definitions(-DASSIMP_TEST_MODELS_NONBSD_DIR="${CMAKE_CURRENT_LIST_DIR}/models-nonbsd")
